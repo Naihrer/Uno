@@ -11,7 +11,6 @@ public class BotaoCarta extends JButton {
     public BotaoCarta(Carta carta, ActionListener acao) {
         boolean ehUno = (carta instanceof CartaOficial);
 
-        // 1. TRATAMENTO DO VALOR (Transforma J, Q, K em nomes de efeito se for UNO)
         String valorExibido = carta.getValor();
         if (ehUno) {
             if (valorExibido.equals("J")) valorExibido = "PULO";
@@ -19,7 +18,6 @@ public class BotaoCarta extends JButton {
             else if (valorExibido.equals("K")) valorExibido = "+2";
         }
 
-        // 2. TRATAMENTO DO SUBTITULO (Naipe para Poker, Cor para UNO)
         String subtitulo;
         if (carta.isCoringa() && carta.getCor().equals("Preto")) {
             subtitulo = ehUno ? "(COR)" : "(NAIPE)";
