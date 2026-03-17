@@ -34,15 +34,12 @@ public class MenuInicial extends JFrame {
         painelEntrada.setBorder(new javax.swing.border.EmptyBorder(10, 10, 10, 10));
 
         campoNome = new JTextField();
-        // LIMPO: Removido "Modelo.Jogador"
         JButton btnAddHumano = new JButton("Adicionar Jogador Real");
         JButton btnAddBot = new JButton("Adicionar Bot");
 
-        // LIMPO: Removido "Modelo.Baralho" das opções
         String[] opcoesBaralho = {"Baralho Convencional (Poker)", "Baralho Oficial (UNO)"};
         comboBaralho = new JComboBox<>(opcoesBaralho);
 
-        // LIMPO: Removido "Modelo.Jogador"
         painelEntrada.add(new JLabel("Nome do Jogador:"));
         painelEntrada.add(campoNome);
 
@@ -52,7 +49,6 @@ public class MenuInicial extends JFrame {
         painelEntrada.add(painelBotoesAdd);
 
         JPanel painelCombo = new JPanel(new BorderLayout());
-        // LIMPO: Removido "Modelo.Baralho"
         painelCombo.add(new JLabel("Tipo de Baralho: "), BorderLayout.WEST);
         painelCombo.add(comboBaralho, BorderLayout.CENTER);
         painelEntrada.add(painelCombo);
@@ -73,7 +69,6 @@ public class MenuInicial extends JFrame {
         painelAcoes.add(btnIniciar);
         add(painelAcoes, BorderLayout.SOUTH);
 
-        // --- EVENTOS ---
         btnAddHumano.addActionListener(e -> {
             String nome = campoNome.getText().trim();
             if (!nome.isEmpty()) {

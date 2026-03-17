@@ -39,7 +39,7 @@ public class TelaJogo extends JFrame {
     }
 
     private void setupUI() {
-        // Painel Superior: Turno e Ordem
+        //Painel de cima: Turno e Ordem
         JPanel painelSuperior = new JPanel(new GridLayout(2, 1));
         labelTurno = new JLabel("", SwingConstants.CENTER);
         labelTurno.setFont(new Font("Segoe UI", Font.BOLD, 32));
@@ -49,12 +49,12 @@ public class TelaJogo extends JFrame {
         painelSuperior.add(labelOrdem);
         add(painelSuperior, BorderLayout.NORTH);
 
-        // Centro: Mesa
+        //Mesa
         painelMesa = new JPanel(new GridBagLayout());
         painelMesa.setBackground(new Color(0, 100, 0));
         add(painelMesa, BorderLayout.CENTER);
 
-        // Direita: Log e Informações da Cor/Naipe
+        //Log e Informações da Cor/Naipe
         JPanel painelInfo = new JPanel(new BorderLayout(10, 10));
         painelInfo.setPreferredSize(new Dimension(450, 0));
 
@@ -66,7 +66,7 @@ public class TelaJogo extends JFrame {
         areaLog.setEditable(false);
         areaLog.setBackground(new Color(25, 25, 25));
 
-        // CSS Inicial para o Log
+        //CSS para o Log
         HTMLDocument doc = (HTMLDocument) areaLog.getDocument();
         doc.getStyleSheet().addRule("body { font-family: 'Segoe UI', sans-serif; color: white; margin: 10px; }");
 
@@ -74,7 +74,7 @@ public class TelaJogo extends JFrame {
         painelInfo.add(new JScrollPane(areaLog), BorderLayout.CENTER);
         add(painelInfo, BorderLayout.EAST);
 
-        // Sul: Mão do jogador e Botões
+        //Mão do jogador e Botões
         JPanel sul = new JPanel(new BorderLayout(15, 15));
         painelMao = new JPanel(new FlowLayout(FlowLayout.CENTER, 15, 10));
 
@@ -109,7 +109,6 @@ public class TelaJogo extends JFrame {
         Jogador atual = jogadores.get(indiceTurno);
         labelTurno.setText("VEZ DE: " + atual.getNome().toUpperCase());
 
-        // CORREÇÃO: Adicionado <html> para o JLabel renderizar o HTML do obterNaipeLog
         labelCor.setText("<html><div style='text-align:center;'>MESA: " + obterNaipeLog(cartaNaMesa).toUpperCase() + "</div></html>");
 
         String seta = (sentido == 1) ? " >> " : " << ";
@@ -322,7 +321,7 @@ public class TelaJogo extends JFrame {
             HTMLEditorKit kit = (HTMLEditorKit) areaLog.getEditorKit();
             kit.insertHTML(doc, doc.getLength(), linha, 0, 0, null);
 
-            // Faz o scroll automático para o final do log
+            //scroll automático para o log
             areaLog.setCaretPosition(doc.getLength());
         } catch (Exception e) {
             e.printStackTrace();

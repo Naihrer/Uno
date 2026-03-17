@@ -24,7 +24,7 @@ public class BaralhoOficial extends Baralho {
                 cartas.push(new CartaOficial(cor, Carta.TipoCarta.NUMERO, i));
             }
 
-            // Duas de cada carta de ação por cor
+            //Duas de cada carta de ação por cor
             for (int i = 0; i < 2; i++) {
                 cartas.push(new CartaOficial(cor, Carta.TipoCarta.SKIP, -1));
                 cartas.push(new CartaOficial(cor, Carta.TipoCarta.REVERSE, -1));

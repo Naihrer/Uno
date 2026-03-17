@@ -17,11 +17,7 @@ public class BotaoCarta extends JButton {
 
     public BotaoCarta(Carta carta, ActionListener acao) {
         boolean ehUno = (carta instanceof CartaOficial);
-
-        // --- DEFINIÇÃO DO SUBTÍTULO (NAIPE OU COR) ---
         String subtitulo;
-
-        // Se for um Coringa que ainda não teve cor definida (Preto)
         if (carta.isCoringa() && carta.getCor().equals("Preto")) {
             subtitulo = ehUno ? "ESCOLHA A COR" : "ESCOLHA O NAIPE";
         } else if (ehUno) {
@@ -35,8 +31,6 @@ public class BotaoCarta extends JButton {
                 default -> "Coringa";
             };
         }
-
-        // --- DEFINIÇÃO DO VALOR E LEGENDA DO EFEITO ---
         String valor = carta.getValor();
         String legenda = "";
 
@@ -56,15 +50,12 @@ public class BotaoCarta extends JButton {
         // Monta o visual com HTML
         this.setText("<html><center><font size='+1'><b>" + valor + "</b></font>"
                 + legenda + "<br><font size='-2'>" + subtitulo + "</font></center></html>");
-
-        // --- ESTILIZAÇÃO ---
         this.setPreferredSize(new Dimension(110, 150));
         this.setFont(new Font("Arial", Font.BOLD, 14));
         this.setFocusPainted(false);
         this.setContentAreaFilled(false);
         this.setBorderPainted(false);
 
-        // Define a cor de fundo do botão baseada na cor atual da carta
         corOriginal = switch (carta.getCor()) {
             case "Vermelho" -> new Color(220, 20, 60);
             case "Amarelo" -> new Color(255, 215, 0);
@@ -76,7 +67,6 @@ public class BotaoCarta extends JButton {
         this.setBackground(corOriginal);
         this.corHover = corOriginal.brighter();
 
-        // Ajusta a cor do texto para melhor contraste
         if (carta.getCor().equals("Amarelo")) setForeground(Color.BLACK);
         else setForeground(Color.WHITE);
 
@@ -109,7 +99,6 @@ public class BotaoCarta extends JButton {
         g2.setColor(getBackground());
         g2.fillRoundRect(0, 0, getWidth() - 3, getHeight() - 3, arcWidth, arcHeight);
 
-        // Borda interna para brilho/detalhe
         g2.setColor(getForeground().equals(Color.WHITE) ? new Color(255,255,255,100) : new Color(0,0,0,100));
         g2.setStroke(new BasicStroke(1.5f));
         g2.drawRoundRect(1, 1, getWidth() - 5, getHeight() - 5, arcWidth, arcHeight);
