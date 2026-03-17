@@ -11,15 +11,33 @@ public class BotaoCarta extends JButton {
     public BotaoCarta(Carta carta, ActionListener acao) {
         boolean ehUno = (carta instanceof CartaOficial);
 
-        String textoBotao = carta.getValor();
-
-        if (carta.isCoringa() && carta.getCor().equals("Preto")) {
-            textoBotao += ehUno ? " (COR)" : " (NAIPE)";
-        } else {
-            textoBotao += " " + carta.getCor();
+        // 1. TRATAMENTO DO VALOR (Transforma J, Q, K em nomes de efeito se for UNO)
+        String valorExibido = carta.getValor();
+        if (ehUno) {
+            if (valorExibido.equals("J")) valorExibido = "PULO";
+            else if (valorExibido.equals("Q")) valorExibido = "INV";
+            else if (valorExibido.equals("K")) valorExibido = "+2";
         }
 
-        this.setText(textoBotao);
+        // 2. TRATAMENTO DO SUBTITULO (Naipe para Poker, Cor para UNO)
+        String subtitulo;
+        if (carta.isCoringa() && carta.getCor().equals("Preto")) {
+            subtitulo = ehUno ? "(COR)" : "(NAIPE)";
+        } else if (ehUno) {
+            subtitulo = carta.getCor();
+        } else {
+            subtitulo = switch (carta.getCor()) {
+                case "Vermelho" -> "Copas";
+                case "Amarelo" -> "Ouros";
+                case "Verde" -> "Paus";
+                case "Azul" -> "Espadas";
+                default -> "Coringa";
+            };
+        }
+
+        // 3. MONTAGEM DO TEXTO (Usa HTML simples para quebrar linha se quiser, ou apenas espaço)
+        this.setText("<html><center>" + valorExibido + "<br>" + subtitulo + "</center></html>");
+
         this.setPreferredSize(new Dimension(100, 130));
 
         Color corFundo = switch (carta.getCor()) {

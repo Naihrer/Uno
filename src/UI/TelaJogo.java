@@ -3,6 +3,7 @@ package UI;
 import Modelo.Baralho;
 import Modelo.Carta;
 import Modelo.Jogador;
+import Espec.CartaOficial;
 
 import javax.swing.*;
 import javax.swing.text.html.HTMLDocument;
@@ -63,7 +64,7 @@ public class TelaJogo extends JFrame {
         areaLog.setEditable(false);
         areaLog.setBackground(new Color(25, 25, 25));
 
-        HTMLDocument doc = (HTMLDocument) areaLog.getDocument();
+        HTMLDocument doc = (HTMLDocument) areaLog.getStyledDocument();
         doc.getStyleSheet().addRule("body { font-family: 'Segoe UI', sans-serif; color: white; margin: 10px; }");
 
         painelInfo.add(labelCor, BorderLayout.NORTH);
@@ -107,7 +108,8 @@ public class TelaJogo extends JFrame {
     private void atualizarTela() {
         Jogador atual = jogadores.get(indiceTurno);
         labelTurno.setText("VEZ DE: " + atual.getNome().toUpperCase());
-        labelCor.setText("<html><div style='text-align:center;'>MESA: " + obterNaipeLog(cartaNaMesa).toUpperCase() + "</div></html>");
+
+        labelCor.setText("<html><div style='text-align:center;'>MESA: " + obterValorFormatado(cartaNaMesa) + " " + obterNaipeLog(cartaNaMesa).toUpperCase() + "</div></html>");
 
         String seta = (sentido == 1) ? " >> " : " << ";
         labelOrdem.setText("ORDEM: " + jogadores.stream().map(Jogador::getNome).collect(Collectors.joining(seta)));
@@ -165,7 +167,7 @@ public class TelaJogo extends JFrame {
         atual.getMao().remove(c);
         this.cartaNaMesa = c;
 
-        log(atual.getNome() + " JOGOU [" + c.getValor() + obterNaipeLog(c) + "]", obterCorJogador(atual));
+        log(atual.getNome() + " JOGOU [" + obterValorFormatado(c) + " " + obterNaipeLog(c) + "]", obterCorJogador(atual));
 
         if (c.isCoringa()) tratarCoringa(atual);
         if (atual.getMao().isEmpty()) { mostrarVitoria(atual.getNome()); return; }
@@ -198,12 +200,14 @@ public class TelaJogo extends JFrame {
     private void tratarCoringa(Jogador j) {
         Color[] coresSwing = {new Color(220, 20, 60), new Color(255, 215, 0), new Color(0, 128, 0), new Color(30, 144, 255)};
         String[] coresBase = {"Vermelho", "Amarelo", "Verde", "Azul"};
-        String[] nomes = {"Copas", "Ouros", "Paus", "Espadas"};
+
+        boolean ehUno = (cartaNaMesa instanceof CartaOficial);
+        String[] nomes = ehUno ? new String[]{"Vermelho", "Amarelo", "Verde", "Azul"} : new String[]{"Copas", "Ouros", "Paus", "Espadas"};
 
         final int[] escolha = {-1};
         if (!j.isBot()) {
             JPanel p = new JPanel(new GridLayout(1, 4, 5, 5));
-            JDialog d = new JDialog(this, "Escolha o Naipe", true);
+            JDialog d = new JDialog(this, ehUno ? "Escolha a Cor" : "Escolha o Naipe", true);
             for (int i = 0; i < 4; i++) {
                 int idx = i;
                 JButton b = new JButton(nomes[i]);
@@ -275,7 +279,7 @@ public class TelaJogo extends JFrame {
         } while (c != null && !c.podeJogarSobre(cartaNaMesa));
 
         if (c != null) {
-            log("Voce comprou " + contador + " carta(s) ate vir [" + c.getValor() + obterNaipeLog(c) + "]", "#FFFFFF");
+            log("Voce comprou " + contador + " carta(s) ate vir [" + obterValorFormatado(c) + " " + obterNaipeLog(c) + "]", "#FFFFFF");
         }
         atualizarTela();
     }
@@ -294,15 +298,29 @@ public class TelaJogo extends JFrame {
             default -> "#FFFFFF";
         };
 
-        String naipe = switch (c.getCor()) {
-            case "Vermelho" -> "Copas";
-            case "Amarelo" -> "Ouros";
-            case "Verde" -> "Paus";
-            case "Azul" -> "Espadas";
+        boolean ehUno = (c instanceof CartaOficial);
+        String nomeText = switch (c.getCor()) {
+            case "Vermelho" -> ehUno ? "Vermelho" : "Copas";
+            case "Amarelo" -> ehUno ? "Amarelo" : "Ouros";
+            case "Verde" -> ehUno ? "Verde" : "Paus";
+            case "Azul" -> ehUno ? "Azul" : "Espadas";
             default -> "Coringa";
         };
 
-        return " <b style='color:" + corHex + "'>" + naipe + "</b>";
+        return "<b style='color:" + corHex + "'>" + nomeText + "</b>";
+    }
+
+    private String obterValorFormatado(Carta c) {
+        String v = c.getValor();
+        boolean ehUno = (c instanceof CartaOficial);
+
+        if (ehUno) {
+            if (v.equals("J")) return "PULO";
+            if (v.equals("Q")) return "INV";
+            if (v.equals("K")) return "+2";
+            return v;
+        }
+        return v; // Para o convencional retorna J, Q, K
     }
 
     private String obterCorJogador(Jogador j) {
