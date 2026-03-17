@@ -14,99 +14,70 @@ import java.util.List;
 public class MenuInicial extends JFrame {
     private DefaultListModel<String> modeloLista;
     private JList<String> listaVisual;
-    private List<Jogador> jogadoresConfigurados;
+    private List<Jogador> jogadores;
     private JTextField campoNome;
     private JComboBox<String> comboBaralho;
 
     public MenuInicial() {
-        jogadoresConfigurados = new ArrayList<>();
+        jogadores = new ArrayList<>();
         modeloLista = new DefaultListModel<>();
         listaVisual = new JList<>(modeloLista);
 
-        setTitle("Configuração de Partida - UNO");
-        setSize(400, 550);
+        setTitle("Configuracao de Partida");
+        setSize(400, 500);
         setDefaultCloseOperation(EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
-        setLayout(new BorderLayout(10, 10));
+        setLayout(new BorderLayout());
 
-        // Painel Superior
-        JPanel painelEntrada = new JPanel(new GridLayout(4, 1, 5, 5));
-        painelEntrada.setBorder(new javax.swing.border.EmptyBorder(10, 10, 10, 10));
-
+        JPanel painelEntrada = new JPanel(new GridLayout(4, 1));
         campoNome = new JTextField();
-        JButton btnAddHumano = new JButton("Adicionar Jogador Real");
-        JButton btnAddBot = new JButton("Adicionar Bot");
+        JButton btnHumano = new JButton("Adicionar Jogador");
+        JButton btnBot = new JButton("Adicionar Robo");
 
-        String[] opcoesBaralho = {"Baralho Convencional (Poker)", "Baralho Oficial (UNO)"};
-        comboBaralho = new JComboBox<>(opcoesBaralho);
+        String[] opcoes = {"Baralho Comum", "Baralho UNO"};
+        comboBaralho = new JComboBox<>(opcoes);
 
-        painelEntrada.add(new JLabel("Nome do Jogador:"));
+        painelEntrada.add(new JLabel("Nome:"));
         painelEntrada.add(campoNome);
 
-        JPanel painelBotoesAdd = new JPanel(new GridLayout(1, 2, 5, 5));
-        painelBotoesAdd.add(btnAddHumano);
-        painelBotoesAdd.add(btnAddBot);
-        painelEntrada.add(painelBotoesAdd);
-
-        JPanel painelCombo = new JPanel(new BorderLayout());
-        painelCombo.add(new JLabel("Tipo de Baralho: "), BorderLayout.WEST);
-        painelCombo.add(comboBaralho, BorderLayout.CENTER);
-        painelEntrada.add(painelCombo);
+        JPanel painelBotoes = new JPanel(new GridLayout(1, 2));
+        painelBotoes.add(btnHumano);
+        painelBotoes.add(btnBot);
+        painelEntrada.add(painelBotoes);
+        painelEntrada.add(comboBaralho);
 
         add(painelEntrada, BorderLayout.NORTH);
+        add(new JScrollPane(listaVisual), BorderLayout.CENTER);
 
-        JScrollPane scrollLista = new JScrollPane(listaVisual);
-        scrollLista.setBorder(BorderFactory.createTitledBorder("Jogadores na Sala"));
-        add(scrollLista, BorderLayout.CENTER);
+        JButton btnIniciar = new JButton("INICIAR");
+        btnIniciar.addActionListener(e -> iniciar());
+        add(btnIniciar, BorderLayout.SOUTH);
 
-        JPanel painelAcoes = new JPanel(new FlowLayout());
-        JButton btnLimpar = new JButton("Limpar Lista");
-        JButton btnIniciar = new JButton("INICIAR JOGO");
-        btnIniciar.setBackground(new Color(0, 150, 0));
-        btnIniciar.setForeground(Color.WHITE);
-
-        painelAcoes.add(btnLimpar);
-        painelAcoes.add(btnIniciar);
-        add(painelAcoes, BorderLayout.SOUTH);
-
-        btnAddHumano.addActionListener(e -> {
-            String nome = campoNome.getText().trim();
+        btnHumano.addActionListener(e -> {
+            String nome = campoNome.getText();
             if (!nome.isEmpty()) {
-                adicionarJogador(nome, false);
+                Jogador j = new Jogador(nome, false);
+                jogadores.add(j);
+                modeloLista.addElement(nome + " (Humano)");
                 campoNome.setText("");
-            } else {
-                JOptionPane.showMessageDialog(this, "Digite um nome!");
             }
         });
 
-        btnAddBot.addActionListener(e -> {
-            int numBot = (int) jogadoresConfigurados.stream().filter(Jogador::isBot).count() + 1;
-            adicionarJogador("Bot " + numBot, true);
-        });
-
-        btnLimpar.addActionListener(e -> {
-            jogadoresConfigurados.clear();
-            modeloLista.clear();
-        });
-
-        btnIniciar.addActionListener(e -> {
-            if (jogadoresConfigurados.size() >= 2) {
-                iniciarPartida();
-            } else {
-                JOptionPane.showMessageDialog(this, "Adicione pelo menos 2 jogadores!");
-            }
+        btnBot.addActionListener(e -> {
+            String nomeBot = "Robo " + (jogadores.size() + 1);
+            Jogador j = new Jogador(nomeBot, true);
+            jogadores.add(j);
+            modeloLista.addElement(nomeBot);
         });
     }
 
-    private void adicionarJogador(String nome, boolean ehBot) {
-        Jogador j = new Jogador(nome, ehBot);
-        jogadoresConfigurados.add(j);
-        modeloLista.addElement(nome + (ehBot ? " (Bot)" : " (Humano)"));
-    }
+    private void iniciar() {
+        if (jogadores.size() < 2) {
+            JOptionPane.showMessageDialog(this, "Adicione 2 jogadores!");
+            return;
+        }
 
-    private void iniciarPartida() {
         Baralho b;
-
         if (comboBaralho.getSelectedIndex() == 0) {
             b = new BaralhoConvencional();
         } else {
@@ -116,18 +87,20 @@ public class MenuInicial extends JFrame {
         b.criarBaralho();
         b.embaralhar();
 
-        for (Jogador j : jogadoresConfigurados) {
+        for (int i = 0; i < jogadores.size(); i++) {
+            Jogador j = jogadores.get(i);
             j.getMao().clear();
-            for (int i = 0; i < 7; i++) j.adicionarCarta(b.comprar());
+            for (int c = 0; c < 7; c++) {
+                j.adicionarCarta(b.comprar());
+            }
         }
 
         Carta inicial = b.comprar();
-        while(inicial != null && inicial.isCoringa()) {
+        while (inicial != null && inicial.isCoringa()) {
             inicial = b.comprar();
         }
 
-        final Carta mesaFixa = inicial;
-        new TelaJogo(jogadoresConfigurados, mesaFixa, b).setVisible(true);
+        new TelaJogo(jogadores, inicial, b).setVisible(true);
         this.dispose();
     }
 }

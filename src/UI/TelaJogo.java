@@ -22,6 +22,7 @@ public class TelaJogo extends JFrame {
     private Carta cartaNaMesa;
     private Baralho baralho;
     private boolean unoApertado = false;
+    private boolean aguardandoConfirmacao = false;
 
     public TelaJogo(List<Jogador> jogadores, Carta inicial, Baralho baralho) {
         this.jogadores = jogadores;
@@ -39,7 +40,6 @@ public class TelaJogo extends JFrame {
     }
 
     private void setupUI() {
-        //Painel de cima: Turno e Ordem
         JPanel painelSuperior = new JPanel(new GridLayout(2, 1));
         labelTurno = new JLabel("", SwingConstants.CENTER);
         labelTurno.setFont(new Font("Segoe UI", Font.BOLD, 32));
@@ -49,15 +49,12 @@ public class TelaJogo extends JFrame {
         painelSuperior.add(labelOrdem);
         add(painelSuperior, BorderLayout.NORTH);
 
-        //Mesa
         painelMesa = new JPanel(new GridBagLayout());
         painelMesa.setBackground(new Color(0, 100, 0));
         add(painelMesa, BorderLayout.CENTER);
 
-        //Log e Informações da Cor/Naipe
         JPanel painelInfo = new JPanel(new BorderLayout(10, 10));
         painelInfo.setPreferredSize(new Dimension(450, 0));
-
         labelCor = new JLabel("", SwingConstants.CENTER);
         labelCor.setFont(new Font("Segoe UI", Font.BOLD, 20));
 
@@ -66,7 +63,6 @@ public class TelaJogo extends JFrame {
         areaLog.setEditable(false);
         areaLog.setBackground(new Color(25, 25, 25));
 
-        //CSS para o Log
         HTMLDocument doc = (HTMLDocument) areaLog.getDocument();
         doc.getStyleSheet().addRule("body { font-family: 'Segoe UI', sans-serif; color: white; margin: 10px; }");
 
@@ -74,7 +70,6 @@ public class TelaJogo extends JFrame {
         painelInfo.add(new JScrollPane(areaLog), BorderLayout.CENTER);
         add(painelInfo, BorderLayout.EAST);
 
-        //Mão do jogador e Botões
         JPanel sul = new JPanel(new BorderLayout(15, 15));
         painelMao = new JPanel(new FlowLayout(FlowLayout.CENTER, 15, 10));
 
@@ -88,7 +83,7 @@ public class TelaJogo extends JFrame {
         btnUno.setVisible(false);
         btnUno.addActionListener(e -> {
             unoApertado = true;
-            log("!!!!! VOCÊ GRITOU UNO! !!!!!", "#FF0000");
+            log("VOCE GRITOU UNO!", "#FF0000");
             btnUno.setVisible(false);
         });
 
@@ -103,12 +98,15 @@ public class TelaJogo extends JFrame {
         indiceTurno += sentido;
         if (indiceTurno >= jogadores.size()) indiceTurno = 0;
         else if (indiceTurno < 0) indiceTurno = jogadores.size() - 1;
+
+        if (!jogadores.get(indiceTurno).isBot()) {
+            aguardandoConfirmacao = true;
+        }
     }
 
     private void atualizarTela() {
         Jogador atual = jogadores.get(indiceTurno);
         labelTurno.setText("VEZ DE: " + atual.getNome().toUpperCase());
-
         labelCor.setText("<html><div style='text-align:center;'>MESA: " + obterNaipeLog(cartaNaMesa).toUpperCase() + "</div></html>");
 
         String seta = (sentido == 1) ? " >> " : " << ";
@@ -118,9 +116,22 @@ public class TelaJogo extends JFrame {
         painelMesa.add(new BotaoCarta(cartaNaMesa, null));
 
         painelMao.removeAll();
+
         if (!atual.isBot()) {
-            for (Carta c : atual.getMao()) painelMao.add(new BotaoCarta(c, e -> acaoJogar(c)));
-            btnUno.setVisible(atual.getMao().size() == 2);
+            if (aguardandoConfirmacao) {
+                JButton btnConfirmar = new JButton("<html><center>CLIQUE PARA VER AS CARTAS DE<br><b>" + atual.getNome().toUpperCase() + "</b></center></html>");
+                btnConfirmar.setPreferredSize(new Dimension(400, 100));
+                btnConfirmar.setFont(new Font("Segoe UI", Font.BOLD, 18));
+                btnConfirmar.addActionListener(e -> {
+                    aguardandoConfirmacao = false;
+                    atualizarTela();
+                });
+                painelMao.add(btnConfirmar);
+                btnUno.setVisible(false);
+            } else {
+                for (Carta c : atual.getMao()) painelMao.add(new BotaoCarta(c, e -> acaoJogar(c)));
+                btnUno.setVisible(atual.getMao().size() == 2);
+            }
         } else {
             btnUno.setVisible(false);
         }
@@ -136,11 +147,13 @@ public class TelaJogo extends JFrame {
     }
 
     private void acaoJogar(Carta c) {
+        if (aguardandoConfirmacao) return;
+
         Jogador atual = jogadores.get(indiceTurno);
         if (!c.podeJogarSobre(this.cartaNaMesa)) return;
 
         if (!atual.isBot() && atual.getMao().size() == 2 && !unoApertado) {
-            log("PUNIÇÃO: Esqueceu o UNO! +2 cartas.", "#FFA500");
+            log("PUNICAO: Esqueceu o UNO! +2 cartas.", "#FFA500");
             for(int i=0; i<2; i++) {
                 Carta comp = baralho.comprar();
                 if(comp != null) atual.adicionarCarta(comp);
@@ -169,13 +182,13 @@ public class TelaJogo extends JFrame {
                 Carta comp = baralho.comprar();
                 if(comp != null) jogadores.get(indiceTurno).adicionarCarta(comp);
             }
-            log("✨ EFEITO: " + jogadores.get(indiceTurno).getNome() + " bloqueado e comprou +" + qtd, "#00FFFF");
+            log("EFEITO: " + jogadores.get(indiceTurno).getNome() + " bloqueado e comprou +" + qtd, "#00FFFF");
         } else if (v.equals("J") || v.equals("PULO")) {
             proximoTurno();
-            log("✨ EFEITO: " + jogadores.get(indiceTurno).getNome() + " foi pulado!", "#00FFFF");
+            log("EFEITO: " + jogadores.get(indiceTurno).getNome() + " foi pulado!", "#00FFFF");
         } else if (v.equals("Q") || v.equals("INV")) {
             sentido *= -1;
-            log("✨ EFEITO: Sentido invertido!", "#00FFFF");
+            log("EFEITO: Sentido invertido!", "#00FFFF");
             if(jogadores.size() == 2) proximoTurno();
         }
         proximoTurno();
@@ -185,7 +198,7 @@ public class TelaJogo extends JFrame {
     private void tratarCoringa(Jogador j) {
         Color[] coresSwing = {new Color(220, 20, 60), new Color(255, 215, 0), new Color(0, 128, 0), new Color(30, 144, 255)};
         String[] coresBase = {"Vermelho", "Amarelo", "Verde", "Azul"};
-        String[] nomes = {"Copas ♥", "Ouros ♦", "Paus ♣", "Espadas ♠"};
+        String[] nomes = {"Copas", "Ouros", "Paus", "Espadas"};
 
         final int[] escolha = {-1};
         if (!j.isBot()) {
@@ -205,7 +218,7 @@ public class TelaJogo extends JFrame {
             escolha[0] = (int)(Math.random() * 4);
         }
         cartaNaMesa.setCor(coresBase[escolha[0]]);
-        log("🃏 CORINGA: " + j.getNome() + " escolheu " + nomes[escolha[0]].toUpperCase(), obterCorJogador(j));
+        log("CORINGA: " + j.getNome() + " escolheu " + nomes[escolha[0]].toUpperCase(), obterCorJogador(j));
     }
 
     private void vezDoBot(Jogador b) {
@@ -228,7 +241,7 @@ public class TelaJogo extends JFrame {
                 } else break;
             } while (!comprada.podeJogarSobre(this.cartaNaMesa));
 
-            log(b.getNome() + " comprou " + contador + " carta(s) até servir", "#888888");
+            log(b.getNome() + " comprou " + contador + " carta(s) ate servir", "#888888");
 
             if (comprada != null && comprada.podeJogarSobre(this.cartaNaMesa)) {
                 acaoJogar(comprada);
@@ -240,12 +253,14 @@ public class TelaJogo extends JFrame {
     }
 
     private void acaoComprar() {
+        if (aguardandoConfirmacao) return;
+
         Jogador atual = jogadores.get(indiceTurno);
         if (atual.isBot()) return;
 
         boolean temOpcao = atual.getMao().stream().anyMatch(c -> c.podeJogarSobre(cartaNaMesa));
         if (temOpcao) {
-            log("AVISO: Você já tem cartas válidas!", "#FFFF00");
+            log("AVISO: Voce ja tem cartas validas!", "#FFFF00");
             return;
         }
 
@@ -260,13 +275,13 @@ public class TelaJogo extends JFrame {
         } while (c != null && !c.podeJogarSobre(cartaNaMesa));
 
         if (c != null) {
-            log("Você comprou " + contador + " carta(s) até vir [" + c.getValor() + obterNaipeLog(c) + "]", "#FFFFFF");
+            log("Voce comprou " + contador + " carta(s) ate vir [" + c.getValor() + obterNaipeLog(c) + "]", "#FFFFFF");
         }
         atualizarTela();
     }
 
     private void mostrarVitoria(String n) {
-        JOptionPane.showMessageDialog(this, "🏆 " + n.toUpperCase() + " VENCEU!", "Fim de Jogo", JOptionPane.INFORMATION_MESSAGE);
+        JOptionPane.showMessageDialog(this, n.toUpperCase() + " VENCEU!", "Fim de Jogo", JOptionPane.INFORMATION_MESSAGE);
         System.exit(0);
     }
 
@@ -280,11 +295,11 @@ public class TelaJogo extends JFrame {
         };
 
         String naipe = switch (c.getCor()) {
-            case "Vermelho" -> "Copas ♥";
-            case "Amarelo" -> "Ouros ♦";
-            case "Verde" -> "Paus ♣";
-            case "Azul" -> "Espadas ♠";
-            default -> "Coringa 🃏";
+            case "Vermelho" -> "Copas";
+            case "Amarelo" -> "Ouros";
+            case "Verde" -> "Paus";
+            case "Azul" -> "Espadas";
+            default -> "Coringa";
         };
 
         return " <b style='color:" + corHex + "'>" + naipe + "</b>";
@@ -298,12 +313,12 @@ public class TelaJogo extends JFrame {
     }
 
     private void log(String m, String corHex) {
-        String icone = "🤖";
-        if (m.contains("Você") || m.contains("a JOGOU") || m.contains("a escolheu")) icone = "👤";
-        else if (m.contains("Bot 1")) icone = "❶";
-        else if (m.contains("Bot 2")) icone = "❷";
-        else if (m.contains("Bot 3")) icone = "❸";
-        else if (m.contains("EFEITO")) icone = "✨";
+        String icone = "";
+        if (m.contains("Voce") || m.contains("a JOGOU") || m.contains("a escolheu")) icone = "P: ";
+        else if (m.contains("Bot 1")) icone = "1: ";
+        else if (m.contains("Bot 2")) icone = "2: ";
+        else if (m.contains("Bot 3")) icone = "3: ";
+        else if (m.contains("EFEITO")) icone = ">> ";
 
         String placar = "<small style='color:#888888'> [ " + jogadores.stream()
                 .map(j -> j.getNome().charAt(0) + ":" + j.getMao().size())
@@ -311,7 +326,7 @@ public class TelaJogo extends JFrame {
 
         String linha;
         if (m.contains("EFEITO")) {
-            linha = "<div style='color:" + corHex + ";'>&nbsp;&nbsp;&nbsp;&nbsp;┗ " + m + " " + placar + "</div>";
+            linha = "<div style='color:" + corHex + ";'>&nbsp;&nbsp;&nbsp;&nbsp;- " + m + " " + placar + "</div>";
         } else {
             linha = "<div style='color:" + corHex + ";'>" + icone + " <b>" + m + "</b> " + placar + "</div>";
         }
@@ -320,8 +335,6 @@ public class TelaJogo extends JFrame {
             HTMLDocument doc = (HTMLDocument) areaLog.getStyledDocument();
             HTMLEditorKit kit = (HTMLEditorKit) areaLog.getEditorKit();
             kit.insertHTML(doc, doc.getLength(), linha, 0, 0, null);
-
-            //scroll automático para o log
             areaLog.setCaretPosition(doc.getLength());
         } catch (Exception e) {
             e.printStackTrace();
