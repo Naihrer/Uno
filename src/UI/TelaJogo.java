@@ -320,7 +320,7 @@ public class TelaJogo extends JFrame {
             if (v.equals("K")) return "+2";
             return v;
         }
-        return v; // Para o convencional retorna J, Q, K
+        return v; //convencional retorna J, Q, K
     }
 
     private String obterCorJogador(Jogador j) {

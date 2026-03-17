@@ -35,7 +35,6 @@ public class BotaoCarta extends JButton {
             };
         }
 
-        // 3. MONTAGEM DO TEXTO (Usa HTML simples para quebrar linha se quiser, ou apenas espaço)
         this.setText("<html><center>" + valorExibido + "<br>" + subtitulo + "</center></html>");
 
         this.setPreferredSize(new Dimension(100, 130));
