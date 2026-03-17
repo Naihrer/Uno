@@ -22,6 +22,8 @@ public class TelaJogo extends JFrame {
     private Carta cartaNaMesa;
     private Baralho baralho;
     private boolean unoApertado = false;
+    // NOVA VARIÁVEL: Bloqueia a visão das cartas entre humanos
+    private boolean aguardandoConfirmacao = false;
 
     public TelaJogo(List<Jogador> jogadores, Carta inicial, Baralho baralho) {
         this.jogadores = jogadores;
@@ -39,7 +41,6 @@ public class TelaJogo extends JFrame {
     }
 
     private void setupUI() {
-        //Painel de cima: Turno e Ordem
         JPanel painelSuperior = new JPanel(new GridLayout(2, 1));
         labelTurno = new JLabel("", SwingConstants.CENTER);
         labelTurno.setFont(new Font("Segoe UI", Font.BOLD, 32));
@@ -49,15 +50,12 @@ public class TelaJogo extends JFrame {
         painelSuperior.add(labelOrdem);
         add(painelSuperior, BorderLayout.NORTH);
 
-        //Mesa
         painelMesa = new JPanel(new GridBagLayout());
         painelMesa.setBackground(new Color(0, 100, 0));
         add(painelMesa, BorderLayout.CENTER);
 
-        //Log e Informações da Cor/Naipe
         JPanel painelInfo = new JPanel(new BorderLayout(10, 10));
         painelInfo.setPreferredSize(new Dimension(450, 0));
-
         labelCor = new JLabel("", SwingConstants.CENTER);
         labelCor.setFont(new Font("Segoe UI", Font.BOLD, 20));
 
@@ -66,7 +64,6 @@ public class TelaJogo extends JFrame {
         areaLog.setEditable(false);
         areaLog.setBackground(new Color(25, 25, 25));
 
-        //CSS para o Log
         HTMLDocument doc = (HTMLDocument) areaLog.getDocument();
         doc.getStyleSheet().addRule("body { font-family: 'Segoe UI', sans-serif; color: white; margin: 10px; }");
 
@@ -74,7 +71,6 @@ public class TelaJogo extends JFrame {
         painelInfo.add(new JScrollPane(areaLog), BorderLayout.CENTER);
         add(painelInfo, BorderLayout.EAST);
 
-        //Mão do jogador e Botões
         JPanel sul = new JPanel(new BorderLayout(15, 15));
         painelMao = new JPanel(new FlowLayout(FlowLayout.CENTER, 15, 10));
 
@@ -103,12 +99,16 @@ public class TelaJogo extends JFrame {
         indiceTurno += sentido;
         if (indiceTurno >= jogadores.size()) indiceTurno = 0;
         else if (indiceTurno < 0) indiceTurno = jogadores.size() - 1;
+
+        // Se o próximo jogador for humano, ativa a trava de confirmação
+        if (!jogadores.get(indiceTurno).isBot()) {
+            aguardandoConfirmacao = true;
+        }
     }
 
     private void atualizarTela() {
         Jogador atual = jogadores.get(indiceTurno);
         labelTurno.setText("VEZ DE: " + atual.getNome().toUpperCase());
-
         labelCor.setText("<html><div style='text-align:center;'>MESA: " + obterNaipeLog(cartaNaMesa).toUpperCase() + "</div></html>");
 
         String seta = (sentido == 1) ? " >> " : " << ";
@@ -118,24 +118,38 @@ public class TelaJogo extends JFrame {
         painelMesa.add(new BotaoCarta(cartaNaMesa, null));
 
         painelMao.removeAll();
+
+        // LÓGICA DE TROCA DE TURNO PARA HUMANOS
         if (!atual.isBot()) {
-            for (Carta c : atual.getMao()) painelMao.add(new BotaoCarta(c, e -> acaoJogar(c)));
-            btnUno.setVisible(atual.getMao().size() == 2);
+            if (aguardandoConfirmacao) {
+                JButton btnConfirmar = new JButton("<html><center>CLIQUE PARA VER AS CARTAS DE<br><b>" + atual.getNome().toUpperCase() + "</b></center></html>");
+                btnConfirmar.setPreferredSize(new Dimension(400, 100));
+                btnConfirmar.setFont(new Font("Segoe UI", Font.BOLD, 18));
+                btnConfirmar.addActionListener(e -> {
+                    aguardandoConfirmacao = false;
+                    atualizarTela(); // Recarrega mostrando as cartas
+                });
+                painelMao.add(btnConfirmar);
+                btnUno.setVisible(false);
+            } else {
+                for (Carta c : atual.getMao()) painelMao.add(new BotaoCarta(c, e -> acaoJogar(c)));
+                btnUno.setVisible(atual.getMao().size() == 2);
+            }
         } else {
             btnUno.setVisible(false);
         }
 
-        revalidate();
-        repaint();
+        revalidate(); repaint();
 
         if (atual.isBot()) {
             Timer t = new Timer(1500, e -> vezDoBot(atual));
-            t.setRepeats(false);
-            t.start();
+            t.setRepeats(false); t.start();
         }
     }
 
     private void acaoJogar(Carta c) {
+        if (aguardandoConfirmacao) return; // Segurança extra
+
         Jogador atual = jogadores.get(indiceTurno);
         if (!c.podeJogarSobre(this.cartaNaMesa)) return;
 
@@ -240,6 +254,8 @@ public class TelaJogo extends JFrame {
     }
 
     private void acaoComprar() {
+        if (aguardandoConfirmacao) return;
+
         Jogador atual = jogadores.get(indiceTurno);
         if (atual.isBot()) return;
 
@@ -320,8 +336,6 @@ public class TelaJogo extends JFrame {
             HTMLDocument doc = (HTMLDocument) areaLog.getStyledDocument();
             HTMLEditorKit kit = (HTMLEditorKit) areaLog.getEditorKit();
             kit.insertHTML(doc, doc.getLength(), linha, 0, 0, null);
-
-            //scroll automático para o log
             areaLog.setCaretPosition(doc.getLength());
         } catch (Exception e) {
             e.printStackTrace();
