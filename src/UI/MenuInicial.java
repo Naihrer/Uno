@@ -54,6 +54,11 @@ public class MenuInicial extends JFrame {
         add(btnIniciar, BorderLayout.SOUTH);
 
         btnHumano.addActionListener(e -> {
+            if (jogadores.size() >= 11) {
+                JOptionPane.showMessageDialog(this, "Limite de 11 jogadores atingido!");
+                return;
+            }
+
             String nome = campoNome.getText();
             if (!nome.isEmpty()) {
                 Jogador j = new Jogador(nome, false);
@@ -64,6 +69,11 @@ public class MenuInicial extends JFrame {
         });
 
         btnBot.addActionListener(e -> {
+            if (jogadores.size() >= 11) {
+                JOptionPane.showMessageDialog(this, "Limite de 11 jogadores atingido!");
+                return;
+            }
+
             String nomeBot = "Robo " + (jogadores.size() + 1);
             Jogador j = new Jogador(nomeBot, true);
             jogadores.add(j);
@@ -73,7 +83,7 @@ public class MenuInicial extends JFrame {
 
     private void iniciar() {
         if (jogadores.size() < 2) {
-            JOptionPane.showMessageDialog(this, "Adicione 2 jogadores!");
+            JOptionPane.showMessageDialog(this, "Adicione pelo menos 2 jogadores!");
             return;
         }
 
